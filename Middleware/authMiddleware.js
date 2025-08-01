@@ -1,4 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config(); // Load environment variables
+
 import jwt from 'jsonwebtoken';
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export const protect = (req, res, next) => {
