@@ -5,7 +5,16 @@ import upload from '../Middleware/multer.js';
 
 const router = express.Router();
 
-router.post('/products', protect, authorizeRoles('vendor'), upload.array('images', 5), createProduct);
+// Public route
 router.get('/products', getAllProducts);
+
+// Vendor/Admin only route for adding products
+router.post(
+  '/products',
+  protect,
+  authorizeRoles('Vendor', 'Admin'),
+  upload.array('images', 5),
+  createProduct
+);
 
 export default router;

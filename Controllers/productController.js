@@ -3,9 +3,21 @@ import Product from '../Models/productModel.js';
 export const createProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock } = req.body;
-    const vendor = req.user.id;
 
-    const images = req.files?.map(file => file.path) || [];
+    if (!name || !description || !price || !category) {
+      return res.status(400).json({ success: false, message: "Name, description, price, and category are required" });
+    }
+
+    const vendor = req.user?._id;
+    if (!vendor) {
+      return res.status(401).json({ success: false, message: 'Vendor authentication failed' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: "At least one product image is required" });
+    }
+
+    const images = req.files.map(file => file.path);
 
     const newProduct = await Product.create({
       name,
@@ -19,6 +31,7 @@ export const createProduct = async (req, res) => {
 
     res.status(201).json({ success: true, product: newProduct });
   } catch (err) {
+    console.error('Create Product Error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
