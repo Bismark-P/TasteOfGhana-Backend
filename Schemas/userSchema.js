@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: {
     type: String,
-    enum: ['Customer', 'Vendor'], // ✅ Removed "Admin" here
+    enum: ['customer', 'vendor'], // ✅ Removed "Admin" here
     default: 'Customer'
   }
 }, { timestamps: true });
