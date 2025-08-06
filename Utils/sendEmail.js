@@ -1,26 +1,20 @@
-// Utils/sendEmail.js
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// ✅ Create reusable transporter object
+// ✅ Create transporter for Gmail using App Password
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail', // Default to Gmail if not set
+  service: 'gmail', // Fixed to Gmail
   auth: {
-    user: process.env.EMAIL_USER, // Your email address
-    pass: process.env.EMAIL_PASS  // Your Gmail App Password
-  }
+    user: process.env.EMAIL_USER, // e.g., mail.tasteofnorthghana@gmail.com
+    pass: process.env.EMAIL_PASS  // Gmail App Password (16 chars)
+  },
+  secure: true, // Force SSL/TLS
+  port: 465
 });
 
-/**
- * Send an email
- * @param {Object} options - Email options
- * @param {string} options.to - Recipient email
- * @param {string} options.subject - Email subject
- * @param {string} [options.html] - HTML body
- * @param {string} [options.text] - Plain text body
- */
+// ✅ Function to send email
 const sendEmail = async ({ to, subject, html, text }) => {
   try {
     const info = await transporter.sendMail({
@@ -31,12 +25,14 @@ const sendEmail = async ({ to, subject, html, text }) => {
       text: text || ''
     });
 
-    // ✅ Log SMTP server response for debugging
-    console.log(`✅ Email sent to: ${to}`);
-    console.log(`📨 SMTP Response: ${info.response}`);
+    // 🔍 Detailed logging
+    console.log('✅ Email send attempt completed.');
+    console.log('📨 Message ID:', info.messageId);
+    console.log('📬 Server Response:', info.response);
+
+    return info;
   } catch (error) {
-    // ❌ Log full error details, not just message
-    console.error('❌ Email failed:', error);
+    console.error('❌ Email sending failed:', error.message);
     throw new Error('Email sending failed');
   }
 };
