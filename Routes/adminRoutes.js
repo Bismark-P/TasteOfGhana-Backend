@@ -4,7 +4,8 @@ import {
   getAllVendorProducts,
   getAllUsers,
   deleteProduct,
-  getDashboardSummary
+  getDashboardSummary,
+  getMembershipSummary // 🆕 Import new controller
 } from '../Controllers/adminController.js';
 
 const router = express.Router();
@@ -14,5 +15,8 @@ router.get('/admin/products', protect, authorizeRoles('Admin'), getAllVendorProd
 router.get('/admin/users', protect, authorizeRoles('Admin'), getAllUsers);
 router.delete('/admin/products/:productId', protect, authorizeRoles('Admin'), deleteProduct);
 router.get('/admin/summary', protect, authorizeRoles('Admin'), getDashboardSummary);
+
+// 🆕 New membership summary endpoint
+router.get('/admin/membership-summary', protect, authorizeRoles('Admin'), getMembershipSummary);
 
 export default router;

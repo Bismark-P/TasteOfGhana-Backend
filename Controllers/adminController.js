@@ -63,3 +63,24 @@ export const getDashboardSummary = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// 🆕 Membership Summary (Vendors, Customers, Total Membership)
+export const getMembershipSummary = async (req, res) => {
+  try {
+    const vendorsCount = await User.countDocuments({ role: 'Vendor' });
+    const customersCount = await User.countDocuments({ role: 'Customer' });
+    const totalUsers = vendorsCount + customersCount;
+
+    res.status(200).json({
+      success: true,
+      summary: {
+        vendors: vendorsCount,
+        customers: customersCount,
+        totalMembership: totalUsers
+      }
+    });
+  } catch (err) {
+    console.error("Admin Membership Summary Error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
