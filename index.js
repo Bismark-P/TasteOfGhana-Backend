@@ -7,9 +7,21 @@ import authRoutes from './Routes/authRoutes.js';
 import dashboardRoutes from './Routes/dashboardRoutes.js';
 import productRoutes from './Routes/productRoutes.js';
 import adminRoutes from './Routes/adminRoutes.js'; 
-import adminAuthRoutes from './Routes/adminAuthRoutes.js'; // ✅ NEW
+import adminAuthRoutes from './Routes/adminAuthRoutes.js'; 
 
+// ✅ Load environment variables
 dotenv.config();
+
+// 🔍 DEBUG: Check if environment variables are loaded
+console.log('🔍 Environment Variables Debug:');
+console.log('📧 EMAIL_USER:', process.env.EMAIL_USER ? '✅ Loaded' : '❌ Missing');
+console.log('📧 EMAIL_USER value:', process.env.EMAIL_USER);
+console.log('📧 EMAIL_PASS:', process.env.EMAIL_PASS ? '✅ Loaded' : '❌ Missing');
+console.log('📧 EMAIL_PASS length:', process.env.EMAIL_PASS?.length || 0);
+console.log('🔑 JWT_SECRET:', process.env.JWT_SECRET ? '✅ Loaded' : '❌ Missing');
+console.log('🗄️ MONGO_URI:', process.env.MONGO_URI ? '✅ Loaded' : '❌ Missing');
+console.log('📂 Current working directory:', process.cwd());
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -33,6 +45,9 @@ const PORT = process.env.PORT || 5050;
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB Connected');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log('✅ Server started successfully');
+    });
   })
   .catch(err => console.error("Mongo error:", err));

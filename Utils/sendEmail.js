@@ -4,26 +4,52 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // ✅ Create transporter for Gmail using App Password
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  secure: true,
-  port: 465,
-  debug: true, // Enable debug logging
-  logger: true // Enable logging
-});
+const createEmailTransporter = () => {
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+
+  if (!emailUser || !emailPass) {
+    console.error('❌ Email credentials missing:');
+    console.error('❌ EMAIL_USER:', emailUser ? '✅ Set' : '❌ Missing');
+    console.error('❌ EMAIL_PASS:', emailPass ? '✅ Set' : '❌ Missing');
+    throw new Error('Email credentials are not properly configured');
+  }
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: emailUser,
+      pass: emailPass
+    },
+    secure: true,
+    port: 465,
+    debug: true, // Enable debug logging
+    logger: true // Enable logging
+  });
+};
+
+const transporter = createEmailTransporter();
 
 // ✅ Verify transporter configuration on startup
 const verifyEmailConfig = async () => {
   try {
+    // Check if credentials are loaded
+    console.log('🔍 Environment Variables Check:');
+    console.log('📧 EMAIL_USER exists:', !!process.env.EMAIL_USER);
+    console.log('📧 EMAIL_USER value:', process.env.EMAIL_USER);
+    console.log('📧 EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
+    console.log('📧 EMAIL_PASS length:', process.env.EMAIL_PASS?.length || 0);
+    
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('❌ Missing EMAIL_USER or EMAIL_PASS in environment variables');
+      return;
+    }
+    
     await transporter.verify();
     console.log('✅ Email transporter verified successfully');
-    console.log('📧 Email User:', process.env.EMAIL_USER);
   } catch (error) {
     console.error('❌ Email transporter verification failed:', error.message);
+    console.error('❌ Full error:', error);
   }
 };
 
