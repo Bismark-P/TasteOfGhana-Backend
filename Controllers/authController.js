@@ -1,4 +1,3 @@
-// Controllers/authController.js
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -14,14 +13,18 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, confirmPassword, role } = req.body;
 
+    console.log('📥 Registration attempt:', { name, email, role });
+
     // ✅ Check passwords match
     if (password !== confirmPassword) {
+      console.log('⚠️ Passwords do not match.');
       return res.status(400).json({ message: "Passwords do not match." });
     }
 
     // ✅ Check if email already exists
     const existing = await User.findOne({ email });
     if (existing) {
+      console.log('⚠️ Email already exists:', email);
       return res.status(400).json({ message: "Email already exists." });
     }
 
@@ -36,9 +39,12 @@ export const register = async (req, res) => {
       role
     });
 
+    console.log('✅ User created:', newUser.email);
+
     // ✅ Send welcome email
     try {
-      await sendEmail({
+      console.log('📤 Sending welcome email...');
+      const emailInfo = await sendEmail({
         to: email,
         subject: 'Welcome to Taste of North Ghana!',
         text: `Hi ${name}, welcome aboard as a ${role}!`,
@@ -52,9 +58,16 @@ export const register = async (req, res) => {
           </div>
         `
       });
+
+      console.log('✅ Email sent:', {
+        messageId: emailInfo.messageId,
+        accepted: emailInfo.accepted,
+        response: emailInfo.response
+      });
+
     } catch (emailErr) {
-      console.error('❌ Error sending email:', emailErr.message);
-      // We won't block registration if email fails
+      console.error('❌ Error sending welcome email:', emailErr.message);
+      // Optional: Log but don't block registration
     }
 
     res.status(201).json({
@@ -79,16 +92,26 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('🔐 Login attempt:', email);
+
     // ✅ Find user
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      console.log('❌ User not found.');
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     // ✅ Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      console.log('❌ Password mismatch.');
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     // ✅ Generate token
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+
+    console.log('✅ Login successful:', user.email);
 
     res.status(200).json({
       success: true,
@@ -101,7 +124,7 @@ export const login = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Login Error:', err);
+    console.error('❌ Login Error:', err);
     res.status(500).json({ message: "Login error", error: err.message });
   }
 };
