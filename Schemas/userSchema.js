@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: ['customer', 'vendor'], // ✅ Removed "Admin" here
-    default: 'Customer'
+    default: 'customer'
   }
 }, { timestamps: true });
 

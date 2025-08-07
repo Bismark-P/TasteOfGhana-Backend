@@ -12,7 +12,7 @@ const generateToken = (id, role) => {
 };
 
 // Allowed roles for user registration
-const allowedRoles = ['Customer', 'Vendor'];
+const allowedRoles = ['customer', 'vendor'];
 
 // REGISTER: USER or VENDOR
 export const register = async (req, res) => {
@@ -52,7 +52,7 @@ export const register = async (req, res) => {
     await sendEmail(
       email,
       'Welcome to the Platform!',
-      `Hello ${name},\n\nThank you for registering as a ${role}.\n\n- The Team`
+      `Hello ${name},\n\nThank you for registering as a ${role} on Taste of North Ghana.\n\n- The Team`
     );
 
     res.status(201).json({
