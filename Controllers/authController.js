@@ -22,7 +22,7 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { fullName, email, password, confirmPassword, role } = req.body;
+    const { name, email, password, confirmPassword, role } = req.body;
 
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role specified.' });
@@ -40,7 +40,7 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      fullName,
+      name,
       email,
       password: hashedPassword,
       role,
@@ -52,14 +52,14 @@ export const register = async (req, res) => {
     await sendEmail(
       email,
       'Welcome to the Platform!',
-      `Hello ${fullName},\n\nThank you for registering as a ${role}.\n\n- The Team`
+      `Hello ${name},\n\nThank you for registering as a ${role}.\n\n- The Team`
     );
 
     res.status(201).json({
       message: 'User registered successfully',
       user: {
         id: newUser._id,
-        fullName: newUser.fullName,
+        name: newUser.name,
         email: newUser.email,
         role: newUser.role,
       },
@@ -95,7 +95,7 @@ export const login = async (req, res) => {
       message: 'Login successful',
       user: {
         id: user._id,
-        fullName: user.fullName,
+        name: user.name,
         email: user.email,
         role: user.role,
       },
