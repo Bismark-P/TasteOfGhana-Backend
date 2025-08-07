@@ -1,3 +1,5 @@
+// At the top
+import Admin from '../Models/adminModel.js';
 import Product from '../Models/productModel.js';
 import User from '../Models/userModel.js';
 
