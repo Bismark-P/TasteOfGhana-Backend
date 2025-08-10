@@ -10,7 +10,7 @@ import {
   getSystemStats,
   createAdminProduct,
   adminController
-} from '../controllers/adminController.js';
+} from '../Controllers/adminController.js';
 
 const router = express.Router();
 
