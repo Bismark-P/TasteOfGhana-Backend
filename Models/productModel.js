@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
-import productSchema from '../Schemas/productSchema.js'; // ✅ Import schema
+import productSchema from '../Schemas/productSchema.js';
 
-// ✅ Compile schema into a model
 const Product = mongoose.model('Product', productSchema);
 
 export default Product;

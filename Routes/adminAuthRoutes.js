@@ -1,11 +1,15 @@
 // Routes/adminAuthRoutes.js
 import express from 'express';
 import { registerAdmin, loginAdmin } from '../Controllers/adminAuthController.js';
+import { protect, authorizeRoles } from '../middleware/authMiddleware.js'; 
+
 
 const router = express.Router();
 
 router.post('/admin/register', registerAdmin);
 router.post('/admin/login', loginAdmin);
+router.post('/admin-only', protect, authorizeRoles('admin'), adminController); 
+router.post('/vendor-zone', protect, authorizeRoles('vendor'), vendorController);
 
 export default router;
 

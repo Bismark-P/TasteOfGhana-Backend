@@ -1,88 +1,179 @@
-// At the top
 import Admin from '../Models/adminModel.js';
-import Product from '../Models/productModel.js';
 import User from '../Models/userModel.js';
+import Product from '../Models/productModel.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
-// ✅ View all vendor products with vendor details
-export const getAllVendorProducts = async (req, res) => {
-  try {
-    const products = await Product.find()
-      .populate('vendor', 'name email role')
-      .sort({ createdAt: -1 });
+const { JWT_SECRET, ADMIN_SECRET_KEY } = process.env;
 
-    res.status(200).json({ success: true, count: products.length, products });
-  } catch (err) {
-    console.error("Admin Get Products Error:", err);
-    res.status(500).json({ success: false, message: err.message });
-  }
+const generateAdminToken = (admin) => {
+  return jwt.sign({ id: admin._id, role: 'admin' }, JWT_SECRET, {
+    expiresIn: '7d'
+  });
 };
 
-// ✅ View all registered users except Admins
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find({ role: { $ne: 'Admin' } }).select('-password');
-    res.status(200).json({ success: true, count: users.length, users });
-  } catch (err) {
-    console.error("Admin Get Users Error:", err);
-    res.status(500).json({ success: false, message: err.message });
-  }
+export const adminController = (req, res) => {
+  res.json({ message: 'Admin route accessed successfully' });
 };
 
-// ✅ Delete a vendor product
-export const deleteProduct = async (req, res) => {
+export const registerAdmin = async (req, res) => {
   try {
-    const { productId } = req.params;
-    const deletedProduct = await Product.findByIdAndDelete(productId);
+    let { name, email, password, confirmPassword, secretKey } = req.body;
 
-    if (!deletedProduct) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+    email = email.toLowerCase();
+
+    if (!name || !email || !password || !confirmPassword || !secretKey) {
+      return res.status(400).json({ message: 'All fields are required.' });
     }
 
-    res.status(200).json({ success: true, message: "Product deleted successfully" });
-  } catch (err) {
-    console.error("Admin Delete Product Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match.' });
+    }
+
+    if (secretKey !== ADMIN_SECRET_KEY) {
+      return res.status(403).json({ message: 'Invalid admin secret key.' });
+    }
+
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(409).json({ message: 'Admin already exists.' });
+    }
+
+    const newAdmin = new Admin({ name, email, password, secretKey });
+    await newAdmin.save();
+
+    const token = generateAdminToken(newAdmin);
+    res.status(201).json({
+      message: 'Admin registered successfully.',
+      admin: {
+        id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email
+      },
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// ✅ Dashboard summary (users, vendors, products count)
-export const getDashboardSummary = async (req, res) => {
+export const loginAdmin = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ role: 'Customer' });
-    const totalVendors = await User.countDocuments({ role: 'Vendor' });
-    const totalProducts = await Product.countDocuments();
+    let { email, password } = req.body;
+    email = email.toLowerCase();
+
+    const admin = await Admin.findOne({ email });
+    if (!admin) return res.status(404).json({ message: 'Admin not found.' });
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials.' });
+
+    const token = generateAdminToken(admin);
+    res.status(200).json({
+      message: 'Login successful.',
+      admin: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email
+      },
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
+export const getAdminDashboard = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalVendors = await User.countDocuments({ role: 'vendor' });
+    const totalCustomers = await User.countDocuments({ role: 'customer' });
 
     res.status(200).json({
-      success: true,
       summary: {
         totalUsers,
         totalVendors,
-        totalProducts
+        totalCustomers,
+        brands: ['Di Sung', 'Shea Shine Cosmetics']
       }
     });
-  } catch (err) {
-    console.error("Admin Dashboard Summary Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Dashboard error.', error: error.message });
   }
 };
 
-// 🆕 Membership Summary (Vendors, Customers, Total Membership)
-export const getMembershipSummary = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
-    const vendorsCount = await User.countDocuments({ role: 'Vendor' });
-    const customersCount = await User.countDocuments({ role: 'Customer' });
-    const totalUsers = vendorsCount + customersCount;
+    const users = await User.find().select('-password');
+    res.status(200).json({ users });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users.', error: error.message });
+  }
+};
 
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await User.findByIdAndDelete(id);
+    res.status(200).json({ message: 'User deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting user.', error: error.message });
+  }
+};
+
+export const getSystemStats = async (req, res) => {
+  try {
     res.status(200).json({
-      success: true,
-      summary: {
-        vendors: vendorsCount,
-        customers: customersCount,
-        totalMembership: totalUsers
+      stats: {
+        uptime: process.uptime(),
+        memoryUsage: process.memoryUsage(),
+        nodeVersion: process.version
       }
     });
-  } catch (err) {
-    console.error("Admin Membership Summary Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching stats.', error: error.message });
+  }
+};
+
+export const createAdminProduct = async (req, res) => {
+  try {
+    let {
+      title,
+      images,
+      description,
+      vendorName,
+      businessName,
+      category,
+      price
+    } = req.body;
+
+    vendorName = vendorName?.toLowerCase();
+    businessName = businessName?.toLowerCase();
+
+    const allowedBrands = ['di sung', 'shea shine cosmetics'];
+    if (!allowedBrands.includes(businessName)) {
+      return res.status(403).json({
+        message: 'Admin can only upload for Di Sung or Shea Shine Cosmetics.'
+      });
+    }
+
+    if (!title || !images || !description || !vendorName || !businessName || !category || !price) {
+      return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    const product = new Product({
+      title,
+      images,
+      description,
+      vendorName,
+      businessName,
+      category,
+      price
+    });
+
+    await product.save();
+    res.status(201).json({ message: 'Product uploaded by admin.', product });
+  } catch (error) {
+    res.status(500).json({ message: 'Error uploading product.', error: error.message });
   }
 };

@@ -1,4 +1,3 @@
-// Models/adminModel.js
 import mongoose from 'mongoose';
 import adminSchema from '../Schemas/adminSchema.js';
 

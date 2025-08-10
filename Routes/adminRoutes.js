@@ -1,22 +1,26 @@
+// Routes/adminRoutes.js
 import express from 'express';
 import { protect, authorizeRoles } from '../Middleware/authMiddleware.js';
 import {
-  getAllVendorProducts,
+  registerAdmin,
+  loginAdmin,
+  getAdminDashboard,
   getAllUsers,
-  deleteProduct,
-  getDashboardSummary,
-  getMembershipSummary // 🆕 Import new controller
-} from '../Controllers/adminController.js';
+  deleteUser,
+  getSystemStats,
+  createAdminProduct,
+  adminController
+} from '../controllers/adminController.js';
 
 const router = express.Router();
 
-// ✅ Admin-only routes
-router.get('/admin/products', protect, authorizeRoles('Admin'), getAllVendorProducts);
-router.get('/admin/users', protect, authorizeRoles('Admin'), getAllUsers);
-router.delete('/admin/products/:productId', protect, authorizeRoles('Admin'), deleteProduct);
-router.get('/admin/summary', protect, authorizeRoles('Admin'), getDashboardSummary);
-
-// 🆕 New membership summary endpoint
-router.get('/admin/membership-summary', protect, authorizeRoles('Admin'), getMembershipSummary);
+router.post('/auth/admin/register', registerAdmin);
+router.post('/auth/admin/login', loginAdmin);
+router.get('/admin/dashboard', getAdminDashboard);
+router.get('/admin/users', getAllUsers);
+router.delete('/admin/users/:id', deleteUser);
+router.get('/admin/stats', getSystemStats);
+router.post('/admin/products', createAdminProduct);
+router.post('/admin-only', protect, authorizeRoles('admin'), adminController);
 
 export default router;
