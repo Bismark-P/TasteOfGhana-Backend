@@ -1,7 +1,7 @@
 // Controllers/orderController.js
 import Order from '../Models/orderModel.js';
 import Cart from '../Models/cartModel.js'; // Assumes cart is stored in DB
-import sendOrderEmail from '../utils/sendOrderEmail.js'; // Optional email utility
+import sendOrderEmail from '../Utils/sendOrderEmail.js'; // Optional email utility
 
 export const createOrder = async (req, res) => {
   try {
