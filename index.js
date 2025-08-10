@@ -8,6 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Route imports
+import authRoutes from './Routes/authRoutes.js';       // ✅ Added
 import adminRoutes from './Routes/adminRoutes.js';
 import userRoutes from './Routes/userRoutes.js';
 import productRoutes from './Routes/productRoutes.js';
@@ -30,11 +31,12 @@ const __dirname = path.dirname(__filename);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
-app.use('/api/admin', adminRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/upload', uploadRoutes);
+app.use('/api/auth', authRoutes);         // ✅ Register/Login
+app.use('/api/admin', adminRoutes);       // Admin routes
+app.use('/api/users', userRoutes);        // User routes
+app.use('/api/products', productRoutes);  // Product routes
+app.use('/api/orders', orderRoutes);      // Order routes
+app.use('/api/upload', uploadRoutes);     // File uploads
 
 // Health check
 app.get('/', (req, res) => {
@@ -51,11 +53,11 @@ const connectDB = async () => {
     console.log('MongoDB connected');
 
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error('MongoDB connection failed:', err.message);
-    process.exit(1); // Exit process with failure
+    process.exit(1);
   }
 };
 
