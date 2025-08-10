@@ -1,7 +1,7 @@
 // Routes/adminAuthRoutes.js
 import express from 'express';
 import { registerAdmin, loginAdmin } from '../Controllers/adminAuthController.js';
-import { protect, authorizeRoles } from '../middleware/authMiddleware.js'; 
+import { protect, authorizeRoles } from '../Middleware/authMiddleware.js'; 
 
 
 const router = express.Router();
