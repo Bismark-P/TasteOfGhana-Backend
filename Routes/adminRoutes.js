@@ -14,13 +14,18 @@ import {
 
 const router = express.Router();
 
-router.post('/auth/admin/register', registerAdmin);
-router.post('/auth/admin/login', loginAdmin);
-router.get('/admin/dashboard', getAdminDashboard);
-router.get('/admin/users', getAllUsers);
-router.delete('/admin/users/:id', deleteUser);
-router.get('/admin/stats', getSystemStats);
-router.post('/admin/products', createAdminProduct);
-router.post('/admin-only', protect, authorizeRoles('admin'), adminController);
+// Auth routes
+router.post('/register', registerAdmin);       // POST /api/admin/register
+router.post('/login', loginAdmin);             // POST /api/admin/login
+
+// Protected admin routes
+router.use(protect, authorizeRoles('admin'));  // Apply protection to all routes below
+
+router.get('/dashboard', getAdminDashboard);   // GET /api/admin/dashboard
+router.get('/users', getAllUsers);             // GET /api/admin/users
+router.delete('/users/:id', deleteUser);       // DELETE /api/admin/users/:id
+router.get('/stats', getSystemStats);          // GET /api/admin/stats
+router.post('/products', createAdminProduct);  // POST /api/admin/products
+router.post('/restricted', adminController);   // POST /api/admin/restricted
 
 export default router;
