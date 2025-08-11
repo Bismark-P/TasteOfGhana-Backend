@@ -1,17 +1,79 @@
+// Controllers/dashboardController.js
+import User from '../Models/userModel.js';
+import Product from '../Models/productModel.js';
+import Order from '../Models/orderModel.js';
+
 export const getDashboard = async (req, res) => {
-  const { role } = req.user;
+  try {
+    const { role, id } = req.user;
 
-  switch (role) {
-    case 'admin':
-      return res.json({ summary: "Admin dashboard summary data" });
+    switch (role) {
+      // ---------- ADMIN DASHBOARD ----------
+      case 'admin': {
+        const totalUsers = await User.countDocuments();
+        const totalVendors = await User.countDocuments({ role: 'vendor' });
+        const totalCustomers = await User.countDocuments({ role: 'customer' });
 
-    case 'vendor':
-      return res.json({ summary: "Vendor dashboard with product stats" });
+        const totalProducts = await Product.countDocuments();
+        const totalOrders = await Order.countDocuments();
+        const pendingOrders = await Order.countDocuments({ status: 'pending' });
 
-    case 'customer':
-      return res.json({ summary: "Customer dashboard with order history" });
+        return res.json({
+          summary: "Admin dashboard summary data",
+          stats: {
+            users: {
+              total: totalUsers,
+              vendors: totalVendors,
+              customers: totalCustomers
+            },
+            products: {
+              total: totalProducts
+            },
+            orders: {
+              total: totalOrders,
+              pending: pendingOrders
+            }
+          }
+        });
+      }
 
-    default:
-      return res.status(403).json({ message: "Access denied" });
+      // ---------- VENDOR DASHBOARD ----------
+      case 'vendor': {
+        const totalVendorProducts = await Product.countDocuments({ vendor: id });
+        const vendorOrders = await Order.countDocuments({ vendor: id });
+        const vendorPendingOrders = await Order.countDocuments({ vendor: id, status: 'pending' });
+
+        return res.json({
+          summary: "Vendor dashboard with product stats",
+          stats: {
+            products: {
+              total: totalVendorProducts
+            },
+            orders: {
+              total: vendorOrders,
+              pending: vendorPendingOrders
+            }
+          }
+        });
+      }
+
+      // ---------- CUSTOMER DASHBOARD ----------
+      case 'customer': {
+        const customerOrders = await Order.find({ customer: id })
+          .sort({ createdAt: -1 })
+          .limit(5);
+
+        return res.json({
+          summary: "Customer dashboard with order history",
+          recentOrders: customerOrders
+        });
+      }
+
+      default:
+        return res.status(403).json({ message: "Access denied" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
