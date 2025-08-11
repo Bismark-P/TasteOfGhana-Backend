@@ -128,20 +128,24 @@ export const getAdminDashboard = async (req, res) => {
 
 // ======================== USERS ========================
 
-// @desc    Get all users, separated by role
+// @desc    Get all users, separated by role and with counts
 // @route   GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
     // Fetch all vendors
     const vendors = await User.find({ role: 'vendor' }).select('-password');
+    const totalVendors = vendors.length;
 
     // Fetch all customers
     const customers = await User.find({ role: 'customer' }).select('-password');
+    const totalCustomers = customers.length;
 
-    // Return both sets of users in a single response object
+    // Return both sets of users and their counts in a single response object
     res.status(200).json({
       vendors,
       customers,
+      totalVendors,
+      totalCustomers,
     });
   } catch (error) {
     console.error(error);
