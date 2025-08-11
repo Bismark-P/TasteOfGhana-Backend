@@ -70,17 +70,59 @@ export const loginAdmin = async (req, res) => {
 
 // ======================== DASHBOARD ========================
 
-// @desc    Get admin dashboard summary
+// @desc    Get a comprehensive admin dashboard summary
 // @route   GET /api/admin/dashboard
 export const getAdminDashboard = async (req, res) => {
   try {
-    // Example: only show admin-focused info
-    res.json({
-      summary: 'Admin dashboard summary data',
-      timestamp: new Date(),
+    const adminId = req.user._id;
+    const adminName = req.user.name;
+
+    // Get admin's products
+    const adminProducts = await Product.find({ user: adminId });
+
+    // Get total users
+    const totalUsers = await User.countDocuments({ role: { $in: ['vendor', 'customer'] } });
+
+    // Get orders for specific brands
+    const brandOrders = await Order.aggregate([
+      {
+        $unwind: '$items'
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'items.product',
+          foreignField: '_id',
+          as: 'productDetails'
+        }
+      },
+      {
+        $unwind: '$productDetails'
+      },
+      {
+        $match: {
+          'productDetails.category': { $in: ["Shea Shine Cosmetics", "D'Sung Vegetable Products"] }
+        }
+      },
+      {
+        $group: {
+          _id: '$productDetails.category',
+          orders: { $push: '$$ROOT' }
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      welcomeMessage: `Welcome, Admin ${adminName}`,
+      adminDashboard: {
+        myProducts: adminProducts,
+        totalUsers: totalUsers,
+        brandOrders: brandOrders,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error.', error: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -152,13 +194,17 @@ export const getSystemStats = async (req, res) => {
 // @route   POST /api/admin/products
 export const createAdminProduct = async (req, res) => {
   try {
-    const { name, price, description } = req.body;
+    const { name, price, description, category } = req.body;
+    const user = req.user._id;
+    const vendorName = req.user.name;
 
     const product = await Product.create({
       name,
       price,
       description,
-      user: req.user._id, // Admin ID
+      category,
+      user,
+      vendorName
     });
 
     res.status(201).json(product);
