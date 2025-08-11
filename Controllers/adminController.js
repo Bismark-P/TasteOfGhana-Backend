@@ -6,21 +6,23 @@ import bcrypt from 'bcryptjs';
 
 const { JWT_SECRET, ADMIN_SECRET_KEY } = process.env;
 
+// Generate JWT for admin
 const generateAdminToken = (admin) => {
   return jwt.sign({ id: admin._id, role: 'admin' }, JWT_SECRET, {
     expiresIn: '7d'
   });
 };
 
+// Simple restricted test controller
 export const adminController = (req, res) => {
   res.json({ message: 'Admin route accessed successfully' });
 };
 
+// ✅ Register admin with password hashing
 export const registerAdmin = async (req, res) => {
   try {
     let { name, email, password, confirmPassword, secretKey } = req.body;
-
-    email = email.toLowerCase();
+    email = email.toLowerCase().trim();
 
     if (!name || !email || !password || !confirmPassword || !secretKey) {
       return res.status(400).json({ message: 'All fields are required.' });
@@ -39,7 +41,16 @@ export const registerAdmin = async (req, res) => {
       return res.status(409).json({ message: 'Admin already exists.' });
     }
 
-    const newAdmin = new Admin({ name, email, password, secretKey });
+    // Hash password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newAdmin = new Admin({
+      name,
+      email,
+      password: hashedPassword
+    });
+
     await newAdmin.save();
 
     const token = generateAdminToken(newAdmin);
@@ -57,10 +68,11 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
+// ✅ Login admin
 export const loginAdmin = async (req, res) => {
   try {
     let { email, password } = req.body;
-    email = email.toLowerCase();
+    email = email.toLowerCase().trim();
 
     const admin = await Admin.findOne({ email });
     if (!admin) return res.status(404).json({ message: 'Admin not found.' });
@@ -83,6 +95,7 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
+// ✅ Dashboard summary
 export const getAdminDashboard = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -102,6 +115,7 @@ export const getAdminDashboard = async (req, res) => {
   }
 };
 
+// ✅ Get all users (excluding password)
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -111,6 +125,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+// ✅ Delete user by ID
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,6 +136,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+// ✅ System stats
 export const getSystemStats = async (req, res) => {
   try {
     res.status(200).json({
@@ -135,6 +151,7 @@ export const getSystemStats = async (req, res) => {
   }
 };
 
+// ✅ Create product for allowed brands
 export const createAdminProduct = async (req, res) => {
   try {
     let {
