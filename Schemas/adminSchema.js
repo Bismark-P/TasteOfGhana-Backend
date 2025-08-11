@@ -1,4 +1,3 @@
-// Schemas/adminSchema.js
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -19,10 +18,6 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // secretKey: {
-  //   type: String,
-  //   required: true
-  // },
   createdAt: {
     type: Date,
     default: Date.now
@@ -39,8 +34,7 @@ adminSchema.pre('save', async function (next) {
 
 // 🔍 Method to compare entered password with hashed password
 adminSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return bcrypt.compare(enteredPassword, this.password);
 };
 
-// ✅ Export only the schema
 export default adminSchema;
