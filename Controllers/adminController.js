@@ -6,7 +6,7 @@ import Order from '../Models/orderModel.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-// ✅ Corrected: Generate JWT
+// ✅ Corrected: Generate JWT payload
 const generateToken = (id, role) => {
   return jwt.sign({ userId: id, role }, process.env.JWT_SECRET, {
     expiresIn: '30d',
@@ -80,10 +80,10 @@ export const getAdminDashboard = async (req, res) => {
     // Get admin's products
     const adminProducts = await Product.find({ user: adminId });
 
-    // Get total users
+    // Get total users (vendors and customers)
     const totalUsers = await User.countDocuments({ role: { $in: ['vendor', 'customer'] } });
 
-    // Get orders for specific brands
+    // Get orders for specific brands using Mongoose aggregation
     const brandOrders = await Order.aggregate([
       {
         $unwind: '$items'
@@ -128,13 +128,23 @@ export const getAdminDashboard = async (req, res) => {
 
 // ======================== USERS ========================
 
-// @desc    Get all users
+// @desc    Get all users, separated by role
 // @route   GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password');
-    res.status(200).json(users);
+    // Fetch all vendors
+    const vendors = await User.find({ role: 'vendor' }).select('-password');
+
+    // Fetch all customers
+    const customers = await User.find({ role: 'customer' }).select('-password');
+
+    // Return both sets of users in a single response object
+    res.status(200).json({
+      vendors,
+      customers,
+    });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
@@ -194,7 +204,7 @@ export const getSystemStats = async (req, res) => {
 // @route   POST /api/admin/products
 export const createAdminProduct = async (req, res) => {
   try {
-    const { name, price, description, category } = req.body;
+    const { name, price, description, category, images } = req.body;
     const user = req.user._id;
     const vendorName = req.user.name;
 
@@ -204,7 +214,8 @@ export const createAdminProduct = async (req, res) => {
       description,
       category,
       user,
-      vendorName
+      vendorName,
+      images
     });
 
     res.status(201).json(product);
