@@ -14,6 +14,6 @@ const router = express.Router();
 // resulting in the desired URLs: /api/profile, /api/dashboard/vendor, etc.
 router.get('/profile', protect, getUserProfile);  // Profile is still handled by a separate controller
 router.get('/dashboard/vendor', protect, authorizeRoles('vendor'), getDashboard);  // ✅ Now uses getDashboard
-router.get('/dashboard/customer', protect, authorizeRoles('user'), getDashboard);  // ✅ Now uses getDashboard
+router.get('/dashboard/customer', protect, authorizeRoles('customer'), getDashboard);  // ✅ Now uses getDashboard
 
 export default router;
