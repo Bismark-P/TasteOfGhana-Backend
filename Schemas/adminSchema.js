@@ -19,10 +19,10 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  secretKey: {
-    type: String,
-    required: true
-  },
+  // secretKey: {
+  //   type: String,
+  //   required: true
+  // },
   createdAt: {
     type: Date,
     default: Date.now
