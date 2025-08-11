@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Route imports
-import authRoutes from './Routes/authRoutes.js';       // ✅ Added
+import authRoutes from './Routes/authRoutes.js';
 import adminRoutes from './Routes/adminRoutes.js';
 import userRoutes from './Routes/userRoutes.js';
 import productRoutes from './Routes/productRoutes.js';
@@ -31,34 +31,34 @@ const __dirname = path.dirname(__filename);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
-app.use('/api/auth', authRoutes);         // ✅ Register/Login
-app.use('/api/admin', adminRoutes);       // Admin routes
-app.use('/api/users', userRoutes);        // User routes
-app.use('/api/products', productRoutes);  // Product routes
-app.use('/api/orders', orderRoutes);      // Order routes
-app.use('/api/upload', uploadRoutes);     // File uploads
+app.use('/api/auth', authRoutes);          // Handles register and login
+app.use('/api/admin', adminRoutes);        // Admin routes
+app.use('/api', userRoutes);              // ✅ CORRECTED: User routes without /users
+app.use('/api/products', productRoutes);   // Product routes
+app.use('/api/orders', orderRoutes);       // Order routes
+app.use('/api/upload', uploadRoutes);      // File uploads
 
 // Health check
 app.get('/', (req, res) => {
-  res.status(200).send('Taste of North Ghana API is running...');
+  res.status(200).send('Taste of North Ghana API is running...');
 });
 
 // MongoDB connection
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-    console.log('MongoDB connected');
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('MongoDB connected');
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('MongoDB connection failed:', err.message);
-    process.exit(1);
-  }
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('MongoDB connection failed:', err.message);
+    process.exit(1);
+  }
 };
 
 connectDB();
