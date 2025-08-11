@@ -1,7 +1,7 @@
 import User from '../Models/userModel.js';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 
 const { JWT_SECRET, EMAIL_USER, EMAIL_PASS, EMAIL_SERVICE } = process.env;

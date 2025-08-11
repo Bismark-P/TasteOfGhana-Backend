@@ -2,7 +2,7 @@ import Admin from '../Models/adminModel.js';
 import User from '../Models/userModel.js';
 import Product from '../Models/productModel.js';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const { JWT_SECRET, ADMIN_SECRET_KEY } = process.env;
 
