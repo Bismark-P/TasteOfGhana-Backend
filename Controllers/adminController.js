@@ -132,15 +132,12 @@ export const getAdminDashboard = async (req, res) => {
 // @route   GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
-    // Fetch all vendors
     const vendors = await User.find({ role: 'vendor' }).select('-password');
     const totalVendors = vendors.length;
 
-    // Fetch all customers
     const customers = await User.find({ role: 'customer' }).select('-password');
     const totalCustomers = customers.length;
 
-    // Return both sets of users and their counts in a single response object
     res.status(200).json({
       totalVendors,
       totalCustomers,
@@ -208,12 +205,13 @@ export const getSystemStats = async (req, res) => {
 // @route   POST /api/admin/products
 export const createAdminProduct = async (req, res) => {
   try {
-    const { name, price, description, category, images } = req.body;
+    // ✅ CORRECTED: Destructure 'title' instead of 'name'
+    const { title, price, description, category, images } = req.body;
     const user = req.user._id;
     const vendorName = req.user.name;
 
     const product = await Product.create({
-      name,
+      title, // ✅ CORRECTED: Use 'title' field
       price,
       description,
       category,
@@ -224,6 +222,7 @@ export const createAdminProduct = async (req, res) => {
 
     res.status(201).json(product);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
