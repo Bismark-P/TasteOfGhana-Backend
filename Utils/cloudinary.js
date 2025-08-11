@@ -9,7 +9,7 @@
 // export default cloudinary;
 
 
-// utils/cloudinary.js
+// Utils/cloudinary.js
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
 
