@@ -142,10 +142,10 @@ export const getAllUsers = async (req, res) => {
 
     // Return both sets of users and their counts in a single response object
     res.status(200).json({
-      vendors,
-      customers,
       totalVendors,
       totalCustomers,
+      vendors,
+      customers,
     });
   } catch (error) {
     console.error(error);
