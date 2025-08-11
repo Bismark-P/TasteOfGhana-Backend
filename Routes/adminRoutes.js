@@ -14,12 +14,12 @@ import {
 
 const router = express.Router();
 
-// Auth routes
-router.post('auth/register', registerAdmin);       // POST /api/admin/register
-router.post('auth/login', loginAdmin);             // POST /api/admin/login
+// ✅ Auth routes
+router.post('/auth/register', registerAdmin); // POST /api/admin/auth/register
+router.post('/auth/login', loginAdmin);       // POST /api/admin/auth/login
 
-// Protected admin routes
-router.use(protect, authorizeRoles('admin'));  // Apply protection to all routes below
+// ✅ Protected admin routes
+router.use(protect, authorizeRoles('admin'));
 
 router.get('/dashboard', getAdminDashboard);   // GET /api/admin/dashboard
 router.get('/users', getAllUsers);             // GET /api/admin/users
