@@ -15,8 +15,8 @@ import {
 const router = express.Router();
 
 // Auth routes
-router.post('/register', registerAdmin);       // POST /api/admin/register
-router.post('/login', loginAdmin);             // POST /api/admin/login
+router.post('auth/register', registerAdmin);       // POST /api/admin/register
+router.post('auth/login', loginAdmin);             // POST /api/admin/login
 
 // Protected admin routes
 router.use(protect, authorizeRoles('admin'));  // Apply protection to all routes below
