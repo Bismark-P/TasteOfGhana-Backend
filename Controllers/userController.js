@@ -1,4 +1,3 @@
-// controllers/userController.js
 import User from '../Models/userModel.js';
 import bcrypt from 'bcryptjs';
 import generateToken from '../Utils/generateToken.js';
@@ -14,23 +13,19 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
       role: role || 'user',
     });
 
-    // 📧 Send welcome email
     try {
       await sendWelcomeEmail(user.email, user.name);
     } catch (emailErr) {
       console.error('❌ Failed to send welcome email:', emailErr.message);
     }
 
-    // ✅ FINAL FIX: Manually create the response object with 'id'
     res.status(201).json({
       id: user._id,
       name: user.name,
@@ -59,7 +54,6 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // ✅ FINAL FIX: Manually create the response object with 'id'
     res.json({
       id: user._id,
       name: user.name,
@@ -77,8 +71,6 @@ export const loginUser = async (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
-    
-    // ✅ FINAL FIX: Manually create the response object with 'id'
     const { _id, ...userData } = user.toObject({ virtuals: true });
     res.json({ id: _id, ...userData });
   } catch (err) {

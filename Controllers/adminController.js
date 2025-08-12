@@ -26,13 +26,15 @@ export const registerAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Admin already exists' });
     }
 
+    // Password is automatically hashed by the pre-save hook
     const admin = await Admin.create({ name, email, password });
 
+    // ✅ FIX: Manually create the response object to correctly use 'id'
+    const { _id, ...adminResponse } = admin.toObject();
+
     res.status(201).json({
-      id: admin._id,
-      name: admin.name,
-      email: admin.email,
-      role: 'admin',
+      ...adminResponse,
+      id: _id,
       token: generateToken(admin._id, 'admin'),
     });
   } catch (error) {
@@ -56,11 +58,11 @@ export const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // ✅ FIX: Manually create the response object to correctly use 'id'
+    const { _id, ...adminResponse } = admin.toObject();
     res.status(200).json({
-      id: admin._id,
-      name: admin.name,
-      email: admin.email,
-      role: 'admin',
+      ...adminResponse,
+      id: _id,
       token: generateToken(admin._id, 'admin'),
     });
   } catch (error) {
@@ -129,6 +131,7 @@ export const getAdminDashboard = async (req, res) => {
 // @route   GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
+    // The user model is now configured to return 'id'
     const vendors = await User.find({ role: 'vendor' }).select('-password');
     const totalVendors = vendors.length;
 
@@ -217,7 +220,12 @@ export const createAdminProduct = async (req, res) => {
       images
     });
 
-    res.status(201).json(product);
+    // ✅ FIX: Manually create the response object to correctly use 'id'
+    const { _id, ...productResponse } = product.toObject();
+    res.status(201).json({
+      ...productResponse,
+      id: _id,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
@@ -251,7 +259,12 @@ export const updateProduct = async (req, res) => {
     product.businessName = businessName || product.businessName;
 
     const updatedProduct = await product.save();
-    res.status(200).json(updatedProduct);
+    // ✅ FIX: Manually create the response object to correctly use 'id'
+    const { _id, ...productResponse } = updatedProduct.toObject();
+    res.status(200).json({
+      ...productResponse,
+      id: _id,
+    });
 
   } catch (error) {
     console.error(error);

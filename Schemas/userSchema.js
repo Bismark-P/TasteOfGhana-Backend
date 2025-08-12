@@ -1,4 +1,3 @@
-// Schemas/userSchema.js
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import normalizeMongoose from 'normalize-mongoose';
@@ -40,6 +39,7 @@ const userSchema = new mongoose.Schema(
       transform: (doc, ret) => {
         delete ret._id;
         delete ret.__v;
+        delete ret.password;
       }
     }
   }

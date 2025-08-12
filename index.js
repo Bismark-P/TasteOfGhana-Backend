@@ -1,4 +1,3 @@
-// index.js
 import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -31,12 +30,12 @@ const __dirname = path.dirname(__filename);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
-app.use('/api/auth', authRoutes);          // Handles register and login
-app.use('/api/admin', adminRoutes);        // Admin routes
-app.use('/api', userRoutes);              // ✅ CORRECTED: User routes without /users
-app.use('/api/products', productRoutes);   // Product routes
-app.use('/api/orders', orderRoutes);       // Order routes
-app.use('/api/upload', uploadRoutes);      // File uploads
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/', (req, res) => {
