@@ -1,3 +1,4 @@
+// productModel
 import mongoose from 'mongoose';
 import productSchema from '../Schemas/productSchema.js';
 

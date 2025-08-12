@@ -3,10 +3,10 @@ import Admin from '../Models/adminModel.js';
 import User from '../Models/userModel.js';
 import Product from '../Models/productModel.js';
 import Order from '../Models/orderModel.js';
+import { deleteFromCloudinary } from '../Utils/cloudinary.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-// ✅ Corrected: Generate JWT payload
 const generateToken = (id, role) => {
   return jwt.sign({ userId: id, role }, process.env.JWT_SECRET, {
     expiresIn: '30d',
@@ -29,7 +29,7 @@ export const registerAdmin = async (req, res) => {
     const admin = await Admin.create({ name, email, password });
 
     res.status(201).json({
-      _id: admin.id,
+      id: admin._id,
       name: admin.name,
       email: admin.email,
       role: 'admin',
@@ -57,7 +57,7 @@ export const loginAdmin = async (req, res) => {
     }
 
     res.status(200).json({
-      _id: admin.id,
+      id: admin._id,
       name: admin.name,
       email: admin.email,
       role: 'admin',
@@ -77,13 +77,10 @@ export const getAdminDashboard = async (req, res) => {
     const adminId = req.user._id;
     const adminName = req.user.name;
 
-    // Get admin's products
     const adminProducts = await Product.find({ user: adminId });
 
-    // Get total users (vendors and customers)
     const totalUsers = await User.countDocuments({ role: { $in: ['vendor', 'customer'] } });
 
-    // Get orders for specific brands using Mongoose aggregation
     const brandOrders = await Order.aggregate([
       {
         $unwind: '$items'
@@ -205,22 +202,80 @@ export const getSystemStats = async (req, res) => {
 // @route   POST /api/admin/products
 export const createAdminProduct = async (req, res) => {
   try {
-    // ✅ CORRECTED: Destructure 'title' instead of 'name'
-    const { title, price, description, category, images } = req.body;
+    const { title, price, description, category, businessName, images } = req.body;
     const user = req.user._id;
     const vendorName = req.user.name;
 
     const product = await Product.create({
-      title, // ✅ CORRECTED: Use 'title' field
+      title,
       price,
       description,
       category,
+      businessName,
       user,
       vendorName,
       images
     });
 
     res.status(201).json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
+// @desc    Update a product
+// @route   PUT /api/admin/products/:id
+export const updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const { title, price, description, category, businessName, images } = req.body;
+
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    if (images && images.length > 0) {
+      const deletePromises = product.images.map(img => deleteFromCloudinary(img.public_id));
+      await Promise.all(deletePromises);
+      
+      product.images = images;
+    }
+
+    product.title = title || product.title;
+    product.price = price || product.price;
+    product.description = description || product.description;
+    product.category = category || product.category;
+    product.businessName = businessName || product.businessName;
+
+    const updatedProduct = await product.save();
+    res.status(200).json(updatedProduct);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
+// @desc    Delete a product
+// @route   DELETE /api/admin/products/:id
+export const deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const deletePromises = product.images.map(img => deleteFromCloudinary(img.public_id));
+    await Promise.all(deletePromises);
+
+    await product.remove();
+
+    res.status(200).json({ message: 'Product removed' });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
