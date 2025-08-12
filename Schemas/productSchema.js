@@ -9,7 +9,6 @@ const productSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
-    // ✅ UPDATED: The images field now stores an object with url and public_id
     images: [
       {
         url: {
@@ -70,10 +69,19 @@ const productSchema = new mongoose.Schema(
       type: Date,
       default: Date.now
     }
+  },
+  {
+    // ✅ UPDATED: Add toJSON options to the schema
+    toJSON: {
+      virtuals: true,
+      transform: (doc, ret) => {
+        delete ret._id;
+        delete ret.__v;
+      }
+    }
   }
 );
 
-// ✅ Add the normalize-mongoose plugin
 productSchema.plugin(normalizeMongoose, {
   doNormalize: true,
   normalizeId: true,
