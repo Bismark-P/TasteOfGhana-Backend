@@ -1,4 +1,4 @@
-// Schemas/userSchemas.js
+// Schemas/userSchema.js
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import normalizeMongoose from 'normalize-mongoose';
@@ -35,7 +35,6 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    // ✅ UPDATED: Add toJSON options to the schema
     toJSON: {
       virtuals: true,
       transform: (doc, ret) => {
@@ -46,7 +45,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// 🔐 Hash password before saving (from your original code)
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
@@ -54,7 +52,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// ✅ Apply the normalize-mongoose plugin
 userSchema.plugin(normalizeMongoose, {
   doNormalize: true,
   normalizeId: true,
