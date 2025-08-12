@@ -1,4 +1,4 @@
-// Controllers/adminController.js
+// adminController
 import Admin from '../Models/adminModel.js';
 import User from '../Models/userModel.js';
 import Product from '../Models/productModel.js';
@@ -8,9 +8,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 const generateToken = (id, role) => {
-  return jwt.sign({ userId: id, role }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  });
+  return jwt.sign({ userId: id, role }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  });
 };
 
 // ======================== AUTH ========================
@@ -26,10 +26,7 @@ export const registerAdmin = async (req, res) => {
       return res.status(400).json({ message: 'Admin already exists' });
     }
 
-    // Password is automatically hashed by the pre-save hook
     const admin = await Admin.create({ name, email, password });
-
-    // ✅ FIX: Manually create the response object to correctly use 'id'
     const { _id, ...adminResponse } = admin.toObject();
 
     res.status(201).json({
@@ -58,7 +55,6 @@ export const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // ✅ FIX: Manually create the response object to correctly use 'id'
     const { _id, ...adminResponse } = admin.toObject();
     res.status(200).json({
       ...adminResponse,
@@ -131,7 +127,6 @@ export const getAdminDashboard = async (req, res) => {
 // @route   GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
-    // The user model is now configured to return 'id'
     const vendors = await User.find({ role: 'vendor' }).select('-password');
     const totalVendors = vendors.length;
 
@@ -220,7 +215,6 @@ export const createAdminProduct = async (req, res) => {
       images
     });
 
-    // ✅ FIX: Manually create the response object to correctly use 'id'
     const { _id, ...productResponse } = product.toObject();
     res.status(201).json({
       ...productResponse,
@@ -259,7 +253,6 @@ export const updateProduct = async (req, res) => {
     product.businessName = businessName || product.businessName;
 
     const updatedProduct = await product.save();
-    // ✅ FIX: Manually create the response object to correctly use 'id'
     const { _id, ...productResponse } = updatedProduct.toObject();
     res.status(200).json({
       ...productResponse,
