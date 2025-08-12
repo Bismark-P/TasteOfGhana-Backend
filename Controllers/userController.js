@@ -1,3 +1,4 @@
+// userController
 import User from '../Models/userModel.js';
 import bcrypt from 'bcryptjs';
 import generateToken from '../Utils/generateToken.js';

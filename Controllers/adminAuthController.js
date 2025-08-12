@@ -1,3 +1,4 @@
+// adminAuthController
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Admin from '../Models/adminModel.js';
