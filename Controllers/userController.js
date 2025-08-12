@@ -30,9 +30,12 @@ export const registerUser = async (req, res) => {
       console.error('❌ Failed to send welcome email:', emailErr.message);
     }
 
+    // ✅ FINAL FIX: Manually create the response object with 'id'
     res.status(201).json({
-      // ✅ UPDATED: Let Mongoose handle the conversion
-      ...user.toObject(),
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
       token: generateToken(user._id, user.role),
     });
   } catch (err) {
@@ -56,9 +59,12 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // ✅ FINAL FIX: Manually create the response object with 'id'
     res.json({
-      // ✅ UPDATED: Let Mongoose handle the conversion
-      ...user.toObject(),
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
       token: generateToken(user._id, user.role),
     });
   } catch (err) {
@@ -70,9 +76,11 @@ export const loginUser = async (req, res) => {
 // 👤 Profile
 export const getUserProfile = async (req, res) => {
   try {
-    // This one was already correct
     const user = await User.findById(req.user._id).select('-password');
-    res.json(user);
+    
+    // ✅ FINAL FIX: Manually create the response object with 'id'
+    const { _id, ...userData } = user.toObject({ virtuals: true });
+    res.json({ id: _id, ...userData });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
