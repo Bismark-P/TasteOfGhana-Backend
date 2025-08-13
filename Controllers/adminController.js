@@ -6,7 +6,7 @@ import Order from '../Models/orderModel.js';
 import { deleteFromCloudinary } from '../Utils/cloudinary.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { registerAdminSchema, loginAdminSchema } from '../Utils/adminValidation.js'; // <-- ADDED
+import { registerAdminSchema, loginAdminSchema } from '../Utils/adminValidation.js';
 
 const generateToken = (id, role) => {
   return jwt.sign({ userId: id, role }, process.env.JWT_SECRET, {
@@ -72,11 +72,16 @@ export const loginAdmin = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const { _id, ...adminResponse } = admin.toObject();
+    const token = generateToken(admin._id, 'admin');
+
     res.status(200).json({
-      ...adminResponse,
-      id: _id,
-      token: generateToken(admin._id, 'admin'),
+      token,
+      user: {
+        id: admin._id,
+        name: admin.name,
+        email: admin.email,
+        role: 'admin'
+      }
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error.', error: error.message });
@@ -97,9 +102,7 @@ export const getAdminDashboard = async (req, res) => {
     const totalUsers = await User.countDocuments({ role: { $in: ['vendor', 'customer'] } });
 
     const brandOrders = await Order.aggregate([
-      {
-        $unwind: '$items'
-      },
+      { $unwind: '$items' },
       {
         $lookup: {
           from: 'products',
@@ -108,9 +111,7 @@ export const getAdminDashboard = async (req, res) => {
           as: 'productDetails'
         }
       },
-      {
-        $unwind: '$productDetails'
-      },
+      { $unwind: '$productDetails' },
       {
         $match: {
           'productDetails.category': { $in: ["Shea Shine Cosmetics", "D'Sung Vegetable Products"] }

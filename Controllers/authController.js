@@ -3,7 +3,7 @@ import User from '../Models/userModel.js';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
-import { registerSchema, loginSchema } from '../Utils/userValidation.js'; // <-- ADDED
+import { registerSchema, loginSchema } from '../Utils/userValidation.js';
 
 const { JWT_SECRET, EMAIL_USER, EMAIL_PASS, EMAIL_SERVICE } = process.env;
 
@@ -33,7 +33,6 @@ const sendWelcomeEmail = async (email, name, role) => {
 };
 
 export const register = async (req, res) => {
-  // Validate request body with Joi
   const { error } = registerSchema.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({
@@ -76,10 +75,10 @@ export const register = async (req, res) => {
     await sendWelcomeEmail(email, name, role);
 
     const token = generateToken(newUser);
-    const userResponse = newUser.toObject(); // ✅ Get a plain object
-    delete userResponse._id; // ✅ Manually remove _id
-    delete userResponse.__v; // ✅ Manually remove __v
-    userResponse.id = newUser._id; // ✅ Manually add 'id' with the correct value
+    const userResponse = newUser.toObject();
+    delete userResponse._id;
+    delete userResponse.__v;
+    userResponse.id = newUser._id;
     
     res.status(201).json({
       message: 'Registration successful.',
@@ -93,7 +92,6 @@ export const register = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  // Validate request body with Joi
   const { error } = loginSchema.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({
@@ -106,8 +104,7 @@ export const login = async (req, res) => {
     let { email, password } = req.body;
     email = email.toLowerCase().trim();
 
-    const user = await User.findOne({ email });
-
+    const user = await User.findOne({ email }).select('-password -__v');
     if (!user) {
       console.log("⚠ No user found for email:", email);
       return res.status(404).json({ message: 'User not found.' });
@@ -120,15 +117,16 @@ export const login = async (req, res) => {
     }
 
     const token = generateToken(user);
-    const userResponse = user.toObject(); // ✅ Get a plain object
-    delete userResponse._id; // ✅ Manually remove _id
-    delete userResponse.__v; // ✅ Manually remove __v
-    userResponse.id = user._id; // ✅ Manually add 'id' with the correct value
 
     res.status(200).json({
-      message: 'Login successful.',
-      user: userResponse,
-      token
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        businessName: user.businessName || null
+      }
     });
   } catch (error) {
     console.error('❌ Login error:', error.message);
