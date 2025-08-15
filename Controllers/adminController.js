@@ -1,4 +1,3 @@
-// Controllers/adminController.js
 import Admin from '../Models/adminModel.js';
 import User from '../Models/userModel.js';
 import Product from '../Models/productModel.js';
@@ -300,6 +299,35 @@ export const deleteProduct = async (req, res) => {
 
     res.status(200).json({ message: 'Product removed' });
 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Get all products created by the admin
+// @route   GET /api/admin/products
+export const getAdminProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ user: req.user._id });
+    res.status(200).json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error.', error: error.message });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Get a single product by ID
+// @route   GET /api/admin/products/:id
+export const getAdminProductById = async (req, res) => {
+  try {
+    const product = await Product.findOne({ _id: req.params.id, user: req.user._id });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found or access denied' });
+    }
+
+    res.status(200).json(product);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
