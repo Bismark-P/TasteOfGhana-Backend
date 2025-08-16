@@ -15,6 +15,7 @@ const generateToken = (id, role) => {
 
 // ======================== AUTH ========================
 
+
 // @desc    Register new admin
 // @route   POST /api/admin/auth/register
 export const registerAdmin = async (req, res) => {
@@ -26,7 +27,12 @@ export const registerAdmin = async (req, res) => {
     });
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, password, adminSecret } = req.body;
+
+  // ✅ NEW: Validate admin secret key
+  if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
+    return res.status(403).json({ message: 'Invalid admin secret key' });
+  }
 
   try {
     const adminExists = await Admin.findOne({ email });
@@ -58,7 +64,12 @@ export const loginAdmin = async (req, res) => {
     });
   }
 
-  const { email, password } = req.body;
+  const { email, password, adminSecret } = req.body;
+
+  // ✅ NEW: Validate admin secret key
+  if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
+    return res.status(403).json({ message: 'Invalid admin secret key' });
+  }
 
   try {
     const admin = await Admin.findOne({ email });
@@ -86,6 +97,7 @@ export const loginAdmin = async (req, res) => {
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
+
 
 // ======================== DASHBOARD ========================
 
