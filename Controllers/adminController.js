@@ -1,23 +1,23 @@
+// adminController.js
+
 import Admin from '../Models/adminModel.js';
 import User from '../Models/userModel.js';
 import Product from '../Models/productModel.js';
 import Order from '../Models/orderModel.js';
-import { deleteFromCloudinary } from '../Utils/cloudinary.js';
+import { deleteFromCloudinary, uploadToCloudinary } from '../Utils/cloudinary.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { registerAdminSchema, loginAdminSchema } from '../Utils/adminValidation.js';
 
+// Token Generator
 const generateToken = (id, role) => {
   return jwt.sign({ userId: id, role }, process.env.JWT_SECRET, {
     expiresIn: '30d',
   });
 };
 
-// ======================== AUTH ========================
+// AUTH
 
-
-// @desc    Register new admin
-// @route   POST /api/admin/auth/register
 export const registerAdmin = async (req, res) => {
   const { error } = registerAdminSchema.validate(req.body, { abortEarly: false });
   if (error) {
@@ -29,7 +29,6 @@ export const registerAdmin = async (req, res) => {
 
   const { name, email, password, adminSecret } = req.body;
 
-  // ✅ NEW: Validate admin secret key
   if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
     return res.status(403).json({ message: 'Invalid admin secret key' });
   }
@@ -53,8 +52,6 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
-// @desc    Login admin
-// @route   POST /api/admin/auth/login
 export const loginAdmin = async (req, res) => {
   const { error } = loginAdminSchema.validate(req.body, { abortEarly: false });
   if (error) {
@@ -66,7 +63,6 @@ export const loginAdmin = async (req, res) => {
 
   const { email, password, adminSecret } = req.body;
 
-  // ✅ NEW: Validate admin secret key
   if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
     return res.status(403).json({ message: 'Invalid admin secret key' });
   }
@@ -98,11 +94,8 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
+// DASHBOARD
 
-// ======================== DASHBOARD ========================
-
-// @desc    Get a comprehensive admin dashboard summary
-// @route   GET /api/admin/dashboard
 export const getAdminDashboard = async (req, res) => {
   try {
     const adminId = req.user._id;
@@ -140,46 +133,36 @@ export const getAdminDashboard = async (req, res) => {
       welcomeMessage: `Welcome, Admin ${adminName}`,
       adminDashboard: {
         myProducts: adminProducts,
-        totalUsers: totalUsers,
-        brandOrders: brandOrders,
+        totalUsers,
+        brandOrders,
       },
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// ======================== USERS ========================
+// USERS
 
-// @desc    Get all users, separated by role and with counts
-// @route   GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
     const vendors = await User.find({ role: 'vendor' }).select('-password');
-    const totalVendors = vendors.length;
-
     const customers = await User.find({ role: 'customer' }).select('-password');
-    const totalCustomers = customers.length;
 
     res.status(200).json({
-      totalVendors,
-      totalCustomers,
+      totalVendors: vendors.length,
+      totalCustomers: customers.length,
       vendors,
       customers,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// @desc    Delete user
-// @route   DELETE /api/admin/users/:id
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     await user.remove();
@@ -189,10 +172,8 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// ======================== STATS ========================
+// STATS
 
-// @desc    Get system stats
-// @route   GET /api/admin/stats
 export const getSystemStats = async (req, res) => {
   try {
     const totalCustomers = await User.countDocuments({ role: 'customer' });
@@ -223,15 +204,21 @@ export const getSystemStats = async (req, res) => {
   }
 };
 
-// ======================== PRODUCTS ========================
+// PRODUCTS
 
-// @desc    Create product as admin
-// @route   POST /api/admin/products
 export const createAdminProduct = async (req, res) => {
   try {
-    const { title, price, description, category, businessName, images } = req.body;
+    const { title, price, description, category, businessName } = req.body;
     const user = req.user._id;
     const vendorName = req.user.name;
+
+    let uploadedImages = [];
+
+    if (req.files && req.files.length > 0) {
+      uploadedImages = await Promise.all(
+        req.files.map(file => uploadToCloudinary(file.buffer))
+      );
+    }
 
     const product = await Product.create({
       title,
@@ -241,7 +228,7 @@ export const createAdminProduct = async (req, res) => {
       businessName,
       user,
       vendorName,
-      images
+      images: uploadedImages
     });
 
     const { _id, ...productResponse } = product.toObject();
@@ -250,29 +237,27 @@ export const createAdminProduct = async (req, res) => {
       id: _id,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// @desc    Update a product
-// @route   PUT /api/admin/products/:id
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { title, price, description, category, businessName, images } = req.body;
+  const { title, price, description, category, businessName } = req.body;
 
   try {
     const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
-    if (images && images.length > 0) {
+    if (req.files && req.files.length > 0) {
       const deletePromises = product.images.map(img => deleteFromCloudinary(img.public_id));
       await Promise.all(deletePromises);
-      
-      product.images = images;
+
+      const uploadedImages = await Promise.all(
+        req.files.map(file => uploadToCloudinary(file.buffer))
+      );
+
+      product.images = uploadedImages;
     }
 
     product.title = title || product.title;
@@ -283,54 +268,40 @@ export const updateProduct = async (req, res) => {
 
     const updatedProduct = await product.save();
     const { _id, ...productResponse } = updatedProduct.toObject();
+
     res.status(200).json({
       ...productResponse,
       id: _id,
     });
-
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// @desc    Delete a product
-// @route   DELETE /api/admin/products/:id
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
     const deletePromises = product.images.map(img => deleteFromCloudinary(img.public_id));
     await Promise.all(deletePromises);
 
     await product.remove();
-
     res.status(200).json({ message: 'Product removed' });
-
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// ✅ ✅ ✅ NEW: Get all products created by the admin
-// @route   GET /api/admin/products
 export const getAdminProducts = async (req, res) => {
   try {
     const products = await Product.find({ user: req.user._id });
     res.status(200).json(products);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// ✅ ✅ ✅ NEW: Get a single product by ID
-// @route   GET /api/admin/products/:id
 export const getAdminProductById = async (req, res) => {
   try {
     const product = await Product.findOne({ _id: req.params.id, user: req.user._id });
@@ -341,12 +312,11 @@ export const getAdminProductById = async (req, res) => {
 
     res.status(200).json(product);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error.', error: error.message });
   }
 };
 
-// ======================== EXTRA ========================
+// EXTRA
 
 export const adminController = (req, res) => {
   res.json({ message: 'Admin restricted route accessed.' });
