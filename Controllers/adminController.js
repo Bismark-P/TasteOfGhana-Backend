@@ -61,11 +61,11 @@ export const loginAdmin = async (req, res) => {
     });
   }
 
-  const { email, password, adminSecret } = req.body;
+  const { email, password} = req.body;
 
-  if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
-    return res.status(403).json({ message: 'Invalid admin secret key' });
-  }
+  // if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
+  //   return res.status(403).json({ message: 'Invalid admin secret key' });
+  // }
 
   try {
     const admin = await Admin.findOne({ email });
