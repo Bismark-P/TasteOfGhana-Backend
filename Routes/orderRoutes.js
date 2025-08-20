@@ -1,11 +1,20 @@
-// routes/orderRoutes.js
 import express from 'express';
-import { createOrder, getUserOrders } from '../Controllers/orderController.js';
-import { protect } from '../Middleware/authMiddleware.js';
+import {
+  createOrder,
+  getOrders,
+  getOrderById,
+  updateOrderStatus,
+  deleteOrder,
+  paystackWebhook
+} from '../Controllers/orderController.js';
 
 const router = express.Router();
 
-router.post('/', protect, createOrder);
-router.get('/mine', protect, getUserOrders);
+router.post('/', createOrder);
+router.get('/', getOrders);
+router.get('/:id', getOrderById);
+router.patch('/:id/status', updateOrderStatus);
+router.delete('/:id', deleteOrder);
+router.post('/webhook/paystack', paystackWebhook);
 
 export default router;

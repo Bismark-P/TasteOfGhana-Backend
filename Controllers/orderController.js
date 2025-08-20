@@ -1,55 +1,80 @@
-// Controllers/orderController.js
 import Order from '../Models/orderModel.js';
-import Cart from '../Models/cartModel.js'; // Assumes cart is stored in DB
-import sendOrderEmail from '../Utils/sendOrderEmail.js'; // Optional email utility
 
+// Create Order
 export const createOrder = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: 'Cart is empty' });
-    }
-
-    const subtotal = cart.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-    const shippingFee = 30; // Flat rate or dynamic
-    const tax = subtotal * 0.075;
-    const total = subtotal + shippingFee + tax;
-
-    const order = new Order({
-      user: userId,
-      items: cart.items.map(item => ({
-        product: item.product._id,
-        quantity: item.quantity,
-        price: item.product.price,
-      })),
-      shippingAddress: req.body.shippingAddress,
-      paymentMethod: req.body.paymentMethod,
-      subtotal,
-      shippingFee,
-      tax,
-      total,
-    });
-
+    const order = new Order(req.body);
     await order.save();
-    await Cart.deleteOne({ user: userId });
-
-    if (req.body.sendEmail) {
-      await sendOrderEmail(userId, order);
-    }
-
     res.status(201).json(order);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ error: err.message });
   }
 };
 
-export const getUserOrders = async (req, res) => {
+// Get All Orders
+export const getOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
-    res.json(orders);
+    const orders = await Order.find({ deleted: false }).populate('customer products.product');
+    res.status(200).json(orders);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Get Single Order
+export const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('customer products.product');
+    if (!order || order.deleted) return res.status(404).json({ error: 'Order not found' });
+    res.status(200).json(order);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update Order Status
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    res.status(200).json(order);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Soft Delete
+export const deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findByIdAndUpdate(req.params.id, {
+      deleted: true,
+      deletedBy: req.user._id,
+      deletedAt: new Date()
+    }, { new: true });
+    res.status(200).json({ message: 'Order deleted', order });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Paystack Webhook Handler
+export const paystackWebhook = async (req, res) => {
+  try {
+    const event = req.body;
+
+    if (event.event === 'charge.success') {
+      const reference = event.data.reference;
+      const order = await Order.findOne({ paymentReference: reference });
+
+      if (order) {
+        order.paymentStatus = 'paid';
+        order.status = 'confirmed';
+        await order.save();
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

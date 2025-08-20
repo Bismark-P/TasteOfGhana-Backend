@@ -1,6 +1,5 @@
-// models/OrderModel.js
 import mongoose from 'mongoose';
-import OrderSchema from '../Schemas/orderSchema.js';
+import orderSchema from '../Schemas/orderSchema.js';
 
-const Order = mongoose.model('Order', OrderSchema);
+const Order = mongoose.model('Order', orderSchema);
 export default Order;
