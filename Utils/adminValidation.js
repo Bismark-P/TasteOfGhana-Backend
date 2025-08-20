@@ -28,9 +28,9 @@ export const loginAdminSchema = Joi.object({
   password: Joi.string().required().messages({
     'string.empty': 'Password is required'
   }),
-  adminSecret: Joi.string().required().messages({
-    'string.empty': 'Admin secret is required'
-  }) // ✅ NEW
+  // adminSecret: Joi.string().required().messages({
+  //   'string.empty': 'Admin secret is required'
+  // }) // ✅ NEW
 });
 
 
