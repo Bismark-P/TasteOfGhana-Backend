@@ -1,6 +1,6 @@
-// Utils/cloudinary.js
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
+import streamifier from 'streamifier';
 
 dotenv.config();
 
@@ -10,22 +10,26 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadToCloudinary = async (localPath, folder = 'products') => {
-  try {
-    const result = await cloudinary.uploader.upload(localPath, {
-      folder,
-      use_filename: true,
-      unique_filename: false,
-      overwrite: true,
-    });
+export const uploadToCloudinary = (buffer, folder = 'products') => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        use_filename: true,
+        unique_filename: false,
+        overwrite: true,
+      },
+      (error, result) => {
+        if (error) return reject(new Error(`Cloudinary upload failed: ${error.message}`));
+        resolve({
+          url: result.secure_url,
+          public_id: result.public_id,
+        });
+      }
+    );
 
-    return {
-      url: result.secure_url,
-      public_id: result.public_id,
-    };
-  } catch (err) {
-    throw new Error(`Cloudinary upload failed: ${err.message}`);
-  }
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
 };
 
 export const deleteFromCloudinary = async (publicId) => {

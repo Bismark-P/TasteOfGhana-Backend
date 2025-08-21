@@ -15,7 +15,8 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.5",
-    "normalize-mongoose": "^1.0.0"
+    "normalize-mongoose": "^1.0.0",
+    "streamifier": "^0.1.1"
   },
   "name": "tasteofnorthghana-backend",
   "version": "1.0.0",
