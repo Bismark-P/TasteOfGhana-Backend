@@ -1,3 +1,4 @@
+// Controllers/productController.js
 import Product from '../Models/productModel.js';
 import { uploadToCloudinary } from '../Utils/cloudinary.js';
 import fs from 'fs';
@@ -114,6 +115,16 @@ export const getProductById = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product || product.deleted) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+
+    // Ownership check
+    if (product.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only update your own products.' });
+    }
+
     const updates = {
       ...req.body,
       vendorName: req.body.vendorName?.toLowerCase(),
@@ -139,6 +150,16 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
   try {
+    const product = await Product.findById(req.params.id);
+    if (!product || product.deleted) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+
+    // Ownership check
+    if (product.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only delete your own products.' });
+    }
+
     await Product.findByIdAndUpdate(req.params.id, { deleted: true });
     res.status(200).json({ message: 'Product marked as deleted.' });
   } catch (error) {
