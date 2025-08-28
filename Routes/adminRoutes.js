@@ -1,3 +1,4 @@
+// adminRoutes.js
 import express from 'express';
 import upload from '../Middleware/multer.js';
 import uploadProductImages from '../Middleware/uploadImages.js';
